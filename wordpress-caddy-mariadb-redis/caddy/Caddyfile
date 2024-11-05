@@ -1,0 +1,30 @@
+(wordpress_security) {
+	@forbidden {
+		not path /wp-includes/ms-files.php
+		path /wp-admin/includes/*.php
+		path /wp-includes/*.php
+		path /wp-config.php
+		path /wp-content/uploads/*.php
+		path /.user.ini
+		path /wp-content/debug.log
+	}
+	respond @forbidden "Access denied" 403
+}
+
+{$SERVER_NAME} {
+	root * /var/www/html
+	encode zstd gzip
+
+	# Serve WordPress PHP files through php-fpm:
+	php_fastcgi wordpress:9000
+
+	# Enable the static file server:
+	file_server {
+		precompressed gzip
+	}
+	header / {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+	}
+	import wordpress_security
+}
